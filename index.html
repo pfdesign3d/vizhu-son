@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>&#8203;</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+  html, body { min-height: 100%; }
+  body {
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 32px 16px;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(1200px 800px at 20% -10%, #2b1f4e 0%, #14101f 55%, #0b0812 100%);
+    background-attachment: fixed;
+    color: #cfc8e6;
+  }
+  .card {
+    width: min(560px, 100%);
+    padding: 34px 30px 26px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    border: 1px solid rgba(255,255,255,.09);
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+    backdrop-filter: blur(8px);
+  }
+  .head { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
+  .cover {
+    width: 76px; height: 76px; flex-shrink: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 210deg, #7c5cff, #4ea1ff, #7c5cff);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 30px rgba(124,92,255,.35);
+    animation: spin 14s linear infinite;
+    animation-play-state: paused;
+  }
+  .cover.playing { animation-play-state: running; }
+  .cover .hole { width: 24px; height: 24px; border-radius: 50%; background: #14101f; border: 4px solid rgba(0,0,0,.35); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 { font-size: 20px; font-weight: 600; line-height: 1.3; word-break: break-word; }
+  .sub { margin-top: 6px; font-size: 12px; color: #9a93b8; }
+
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.06);
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .item:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
+  .item.active { background: rgba(124,92,255,.14); border-color: rgba(124,92,255,.45); }
+  .ico {
+    width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+    background: rgba(124,92,255,.16); border: 1px solid rgba(124,92,255,.4);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .item.active .ico { background: linear-gradient(145deg, #8a6bff, #5a8dff); border-color: transparent; }
+  .ico svg { width: 15px; height: 15px; fill: #cfc8e6; }
+  .item.active .ico svg { fill: #fff; }
+  .meta { flex: 1; min-width: 0; }
+  .name { font-size: 14px; line-height: 1.35; word-break: break-word; }
+  .item.active .name { color: #e6e1f5; }
+  .dur { font-size: 11.5px; color: #9a93b8; margin-top: 3px; line-height: 1.35; }
+  .dur .genre { letter-spacing: .2px; }
+  .dur .len { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .focus {
+    display: flex; align-items: center; gap: 5px; flex-shrink: 0;
+    font-size: 11px; letter-spacing: .2px; white-space: nowrap;
+    color: #ffc978;
+    background: rgba(255,201,120,.12);
+    border: 1px solid rgba(255,201,120,.32);
+    border-radius: 20px; padding: 4px 10px 4px 8px;
+  }
+  .focus svg { width: 12px; height: 12px; fill: #ffc978; }
+  .item.focus-row { border-color: rgba(255,201,120,.28); }
+  .item.focus-row.active { border-color: rgba(124,92,255,.45); }
+  @media (max-width: 430px) { .focus span { display: none; } .focus { padding: 5px 7px; } }
+  .spinner {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.25); border-top-color: #cfc8e6;
+    animation: rot .8s linear infinite;
+  }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  .bar { margin: 22px 0 6px; height: 14px; display: flex; align-items: center; cursor: pointer; }
+  .bar .track { position: relative; height: 5px; width: 100%; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .bar .fill { position: absolute; inset: 0 100% 0 0; background: linear-gradient(90deg, #8a6bff, #4ea1ff); border-radius: 3px; }
+  .time { display: flex; justify-content: space-between; font-size: 12px; color: #9a93b8; font-variant-numeric: tabular-nums; }
+  .status { margin-top: 14px; font-size: 12px; color: #6f6893; text-align: center; min-height: 15px; }
+
+  /* видеоклип */
+  .vblock { display: none; margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.08); }
+  .vblock.on { display: block; }
+  .vtitle { font-size: 13px; color: #9a93b8; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+  .vtitle svg { width: 14px; height: 14px; fill: #9a93b8; }
+  .vwrap {
+    position: relative; width: 100%; aspect-ratio: 16 / 9;
+    border-radius: 14px; overflow: hidden;
+    background: #0b0812 center/cover no-repeat;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .vwrap video { width: 100%; height: 100%; display: block; background: #000; }
+  .vposter {
+    position: absolute; inset: 0; cursor: pointer;
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .25s;
+  }
+  .vposter::after { content: ""; position: absolute; inset: 0; background: rgba(11,8,18,.35); }
+  .vposter.hidden { opacity: 0; pointer-events: none; }
+  .vbtn {
+    position: relative; z-index: 1;
+    width: 66px; height: 66px; border-radius: 50%;
+    background: linear-gradient(145deg, #8a6bff, #5a8dff);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 30px rgba(110,100,255,.45);
+    transition: transform .12s;
+  }
+  .vposter:hover .vbtn { transform: scale(1.07); }
+  .vbtn svg { width: 26px; height: 26px; fill: #fff; margin-left: 4px; }
+  .vload { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.1); }
+  .vload .vfill { height: 100%; width: 0; background: linear-gradient(90deg, #8a6bff, #4ea1ff); transition: width .2s; }
+  .vnote { margin-top: 10px; font-size: 12px; color: #6f6893; text-align: center; min-height: 15px; }
+</style>
+</head>
+<body oncontextmenu="return false">
+  <div class="card">
+    <div class="head">
+      <div class="cover" id="cover"><div class="hole"></div></div>
+      <div>
+        <h1 id="album"></h1>
+        <div class="sub"><span id="subtitle"></span> &nbsp;·&nbsp; &#128274; только прослушивание</div>
+      </div>
+    </div>
+
+    <div class="list" id="list"></div>
+
+    <div class="bar" id="bar"><div class="track"><div class="fill" id="fill"></div></div></div>
+    <div class="time"><span id="cur">0:00</span><span id="dur">--:--</span></div>
+    <div class="status" id="status"></div>
+
+    <div class="vblock" id="vblock">
+      <div class="vtitle">
+        <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        <span id="vname">Видеоклип</span>
+      </div>
+      <div class="vwrap" id="vwrap">
+        <video id="video" playsinline controls controlsList="nodownload noplaybackrate noremoteplayback" disablePictureInPicture></video>
+        <div class="vposter" id="vposter">
+          <div class="vbtn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        <div class="vload" id="vload"><div class="vfill" id="vfill"></div></div>
+      </div>
+      <div class="vnote" id="vnote"></div>
+    </div>
+  </div>
+<script>
+(function () {
+  var TRACKS = [{"title":"ESeb3YiTNS5sI6TkIvX1","genre":"gtolET1IlMI+k1dNvHc94RqlORZa/bbU8Q==","dir":"d0","seed":231490742,"count":22,"focus":false,"buffer":null,"loading":null},{"title":"ESKb1Xj1VX35I6XlDfX/Qtcc6qn5SleYSlBJBqCL0Wg=","genre":"hdQ5DnhBlsQ6m0tTvHc94RqlORZa/bbU8dDq6hJh","dir":"d1","seed":2132388274,"count":21,"focus":false,"buffer":null,"loading":null},{"title":"EReb24ieNSGcSPWKvPX1Qtwc46n0S2hoIiAkVcHbjw==","genre":"j9ooES1Xiswg0mFG+UQlsjmjKA==","dir":"d2","seed":1156397484,"count":19,"focus":true,"buffer":null,"loading":null}];
+  var VIDEO = {"title":"EReb24ieNSGcSPWKvPX1Qtwc46n0S2hoIiAkVcHbj8TiXvqlOHoUHe/IlMCimvD+YbyNjzmq","dir":"v","seed":980966719,"count":54,"duration":242.56,"mime":"video/mp4; codecs=\"avc1.640028,mp4a.40.2\"","poster":"data:image/jpeg;base64,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"};
+  var META = {"album":"ESeb3YiTNS5sI6TkIvX1vEkczKjESlloJCArVcEq0WPRT78FOHUUFe7z","subtitle":"kdQ+CXh1i8EjhlZfvOf/srlxiMhaSlhpGCAgVPTauMTQf74wOUgUFu/JlfpS9LWVMNfo51TFA26Dd6k="};
+
+  // тексты хранятся не открытым текстом — чтобы страницу нельзя было найти
+  // поиском по названиям треков; на отображение это никак не влияет
+  function dec(b64) {
+    if (!b64) return '';
+    var bin = atob(b64);
+    var arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    var s = 0x5EED1F;
+    for (var j = 0; j < arr.length; j++) {
+      s = (s ^ (s << 13)) >>> 0;
+      s = (s ^ (s >>> 17)) >>> 0;
+      s = (s ^ (s << 5)) >>> 0;
+      arr[j] ^= (s & 0xFF);
+    }
+    return decodeURIComponent(escape(String.fromCharCode.apply(null, arr)));
+  }
+
+  document.title = dec(META.album);
+  document.getElementById('album').textContent = dec(META.album);
+  document.getElementById('subtitle').textContent = dec(META.subtitle);
+
+  var ctx = null;
+  var source = null;
+  var current = -1;
+  var playing = false;
+  var offset = 0;
+  var startedAt = 0;
+
+  var listEl = document.getElementById('list');
+  var fill = document.getElementById('fill');
+  var curEl = document.getElementById('cur');
+  var durEl = document.getElementById('dur');
+  var bar = document.getElementById('bar');
+  var cover = document.getElementById('cover');
+  var status = document.getElementById('status');
+
+  var ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+  var ICON_STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.6.9-4.8 4.7 1.2 6.7L12 17.8 6.1 21l1.2-6.7L2.5 9.6l6.6-.9L12 2.5z"/></svg>';
+
+  function fmt(t) {
+    if (t == null || isNaN(t)) return '--:--';
+    t = Math.max(0, Math.floor(t));
+    return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2);
+  }
+
+  // аудио: непрерывный поток по всему файлу
+  function decodeStream(data, seed) {
+    var s = seed >>> 0;
+    for (var i = 0; i < data.length; i++) {
+      s = (s ^ (s << 13)) >>> 0;
+      s = (s ^ (s >>> 17)) >>> 0;
+      s = (s ^ (s << 5)) >>> 0;
+      data[i] ^= (s & 0xFF);
+    }
+  }
+
+  // видео: каждый кусок независим — можно грузить с упреждением
+  function decodeChunk(data, seed, index) {
+    var s = ((seed ^ Math.imul(index + 1, 0x9E3779B1)) >>> 0) || 1;
+    for (var i = 0; i < data.length; i++) {
+      s = (s ^ (s << 13)) >>> 0;
+      s = (s ^ (s >>> 17)) >>> 0;
+      s = (s ^ (s << 5)) >>> 0;
+      data[i] ^= (s & 0xFF);
+    }
+  }
+
+  // ---------------- аудио-плейлист ----------------
+  var rows = [];
+  TRACKS.forEach(function (t, i) {
+    var row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML =
+      '<div class="ico">' + ICON_PLAY + '</div>' +
+      '<div class="meta"><div class="name"></div>' +
+      '<div class="dur"><span class="genre"></span><span class="len"></span></div></div>' +
+      (t.focus ? '<div class="focus" title="Приоритетный трек релиза">' + ICON_STAR + '<span>фокус-трек</span></div>' : '');
+    row.querySelector('.name').textContent = dec(t.title);
+    row.querySelector('.genre').textContent = dec(t.genre);
+    if (!t.genre) row.querySelector('.len').textContent = '—';
+    if (t.focus) row.classList.add('focus-row');
+    row.addEventListener('click', function () { onRowClick(i); });
+    listEl.appendChild(row);
+    rows.push(row);
+  });
+
+  function setIcon(i, kind) {
+    var ico = rows[i].querySelector('.ico');
+    if (kind === 'load') ico.innerHTML = '<div class="spinner"></div>';
+    else ico.innerHTML = kind === 'pause' ? ICON_PAUSE : ICON_PLAY;
+  }
+
+  function render() {
+    rows.forEach(function (r, i) { r.classList.toggle('active', i === current); });
+    var t = current >= 0 ? TRACKS[current] : null;
+    var buf = t ? t.buffer : null;
+    var pos = playing && ctx ? Math.min(ctx.currentTime - startedAt, buf ? buf.duration : 0) : offset;
+    if (buf) {
+      fill.style.right = (100 - (pos / buf.duration) * 100) + '%';
+      curEl.textContent = fmt(pos);
+      durEl.textContent = fmt(buf.duration);
+    } else {
+      fill.style.right = '100%';
+      curEl.textContent = '0:00';
+      durEl.textContent = '--:--';
+    }
+  }
+
+  function load(i) {
+    var t = TRACKS[i];
+    if (t.buffer) return Promise.resolve(t.buffer);
+    if (t.loading) return t.loading;
+    setIcon(i, 'load');
+    status.textContent = 'Загрузка…';
+    var reqs = [];
+    for (var k = 0; k < t.count; k++) {
+      reqs.push(fetch(t.dir + '/' + k + '.bin').then(function (r) {
+        if (!r.ok) throw new Error('fetch');
+        return r.arrayBuffer();
+      }));
+    }
+    t.loading = Promise.all(reqs).then(function (parts) {
+      var total = 0, j;
+      for (j = 0; j < parts.length; j++) total += parts[j].byteLength;
+      var data = new Uint8Array(total);
+      var off = 0;
+      for (j = 0; j < parts.length; j++) { data.set(new Uint8Array(parts[j]), off); off += parts[j].byteLength; }
+      decodeStream(data, t.seed);
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      return ctx.decodeAudioData(data.buffer);
+    }).then(function (buf) {
+      t.buffer = buf;
+      t.loading = null;
+      rows[i].querySelector('.len').textContent = (t.genre ? '  ·  ' : '') + fmt(buf.duration);
+      status.textContent = '';
+      return buf;
+    }).catch(function (e) {
+      t.loading = null;
+      setIcon(i, 'play');
+      status.textContent = 'Не удалось загрузить трек';
+      throw e;
+    });
+    return t.loading;
+  }
+
+  function startPlayback() {
+    var t = TRACKS[current];
+    source = ctx.createBufferSource();
+    source.buffer = t.buffer;
+    source.connect(ctx.destination);
+    var myIndex = current;
+    source.onended = function () {
+      if (!playing || current !== myIndex) return;
+      if (ctx.currentTime - startedAt >= t.buffer.duration - 0.12) next();
+    };
+    source.start(0, offset);
+    startedAt = ctx.currentTime - offset;
+    playing = true;
+    setIcon(current, 'pause');
+    cover.classList.add('playing');
+    render();
+  }
+
+  function stopSource() {
+    if (source) { source.onended = null; try { source.stop(); } catch (e) {} source = null; }
+  }
+
+  function pause() {
+    if (!playing) return;
+    offset = Math.min(ctx.currentTime - startedAt, TRACKS[current].buffer.duration);
+    stopSource();
+    playing = false;
+    setIcon(current, 'play');
+    cover.classList.remove('playing');
+  }
+
+  function play(i, from) {
+    var switching = i !== current;
+    if (switching) {
+      if (current >= 0) { stopSource(); setIcon(current, 'play'); }
+      current = i;
+      offset = 0;
+    }
+    if (from != null) offset = from;
+    render();
+    load(i).then(function () {
+      if (current !== i) return;
+      if (ctx.state === 'suspended') ctx.resume();
+      var v = document.getElementById('video');
+      if (v && !v.paused) v.pause();
+      startPlayback();
+    }).catch(function () {});
+  }
+
+  function next() {
+    stopSource();
+    playing = false;
+    setIcon(current, 'play');
+    if (current + 1 < TRACKS.length) play(current + 1);
+    else { offset = 0; cover.classList.remove('playing'); render(); }
+  }
+
+  function onRowClick(i) {
+    if (i === current && playing) pause();
+    else if (i === current && !playing && TRACKS[i].buffer) {
+      if (ctx.state === 'suspended') ctx.resume();
+      var v = document.getElementById('video');
+      if (v && !v.paused) v.pause();
+      startPlayback();
+    }
+    else play(i);
+  }
+
+  bar.addEventListener('click', function (e) {
+    if (current < 0 || !TRACKS[current].buffer) return;
+    var r = bar.getBoundingClientRect();
+    var p = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    var pos = p * TRACKS[current].buffer.duration;
+    if (playing) { stopSource(); offset = pos; startPlayback(); }
+    else { offset = pos; render(); }
+  });
+
+  (function tick() { render(); requestAnimationFrame(tick); })();
+
+  // ---------------- видеоклип ----------------
+  if (VIDEO) {
+    var vblock = document.getElementById('vblock');
+    var video = document.getElementById('video');
+    var vposter = document.getElementById('vposter');
+    var vwrap = document.getElementById('vwrap');
+    var vfill = document.getElementById('vfill');
+    var vnote = document.getElementById('vnote');
+    document.getElementById('vname').textContent = dec(VIDEO.title);
+    vblock.classList.add('on');
+    if (VIDEO.poster) vposter.style.backgroundImage = 'url(' + VIDEO.poster + ')';
+
+    video.addEventListener('play', function () { if (playing) pause(); });
+    video.addEventListener('playing', function () { vnote.textContent = ''; });
+
+    var started = false;
+    vposter.addEventListener('click', function () {
+      if (started) return;
+      started = true;
+      vposter.classList.add('hidden');
+      if (playing) pause();
+      startVideo();
+    });
+
+    function fetchChunk(k) {
+      return fetch(VIDEO.dir + '/' + k + '.bin').then(function (r) {
+        if (!r.ok) throw new Error('fetch');
+        return r.arrayBuffer();
+      }).then(function (buf) {
+        var arr = new Uint8Array(buf);
+        decodeChunk(arr, VIDEO.seed, k);
+        return arr;
+      });
+    }
+
+    var failed = false;
+    function startVideo() {
+      var mime = VIDEO.mime;
+      if (window.MediaSource && MediaSource.isTypeSupported(mime)) streamMSE(mime);
+      else blobFallback();
+    }
+
+    // если потоковый режим не завёлся — тихо переключаемся на прямую загрузку
+    function onStreamFail() {
+      if (failed) return;
+      failed = true;
+      vnote.textContent = 'Готовлю клип…';
+      try { video.removeAttribute('src'); video.load(); } catch (e) {}
+      blobFallback();
+    }
+
+    // потоковое воспроизведение: играет уже через пару секунд
+    function streamMSE(mime) {
+      var ms = new MediaSource();
+      video.src = URL.createObjectURL(ms);
+      video.addEventListener('error', onStreamFail);
+      ms.addEventListener('sourceopen', function () {
+        var sb;
+        try { sb = ms.addSourceBuffer(mime); }
+        catch (e) { onStreamFail(); return; }
+        sb.addEventListener('error', onStreamFail);
+        // задаём длительность сразу — иначе шкала перемотки пустая до конца загрузки
+        if (VIDEO.duration) { try { ms.duration = VIDEO.duration; } catch (e) {} }
+
+        var queue = [];
+        var nextToAppend = 0;
+        var received = {};
+        var fetched = 0;
+        var appended = 0;
+        var PARALLEL = 3;
+
+        function pumpAppend() {
+          if (failed || sb.updating) return;
+          if (received[nextToAppend]) {
+            var chunk = received[nextToAppend];
+            delete received[nextToAppend];
+            nextToAppend++;
+            try { sb.appendBuffer(chunk); } catch (e) { onStreamFail(); return; }
+          } else if (appended >= VIDEO.count && ms.readyState === 'open') {
+            try { ms.endOfStream(); } catch (e) {}
+          }
+        }
+
+        sb.addEventListener('updateend', function () {
+          appended++;
+          vfill.style.width = Math.round(appended / VIDEO.count * 100) + '%';
+          if (appended >= VIDEO.count) {
+            if (ms.readyState === 'open') { try { ms.endOfStream(); } catch (e) {} }
+            vnote.textContent = '';
+            return;
+          }
+          pumpAppend();
+        });
+
+        function pumpFetch() {
+          if (failed) return;
+          while (fetched < VIDEO.count && (fetched - nextToAppend) < PARALLEL) {
+            (function (k) {
+              fetchChunk(k).then(function (arr) {
+                if (failed) return;
+                received[k] = arr;
+                pumpAppend();
+                pumpFetch();
+              }).catch(function () { if (!failed) vnote.textContent = 'Не удалось загрузить видео'; });
+            })(fetched);
+            fetched++;
+          }
+        }
+
+        vnote.textContent = 'Загрузка клипа…';
+        pumpFetch();
+        video.play().catch(function () {});
+      });
+    }
+
+    // запасной путь (Safari на iPhone): скачиваем целиком, потом играем
+    function blobFallback() {
+      vnote.textContent = 'Загрузка клипа… 0%';
+      var parts = new Array(VIDEO.count);
+      var done = 0;
+      var chain = Promise.resolve();
+      for (var k = 0; k < VIDEO.count; k++) {
+        (function (idx) {
+          chain = chain.then(function () {
+            return fetchChunk(idx).then(function (arr) {
+              parts[idx] = arr;
+              done++;
+              var pct = Math.round(done / VIDEO.count * 100);
+              vfill.style.width = pct + '%';
+              vnote.textContent = 'Загрузка клипа… ' + pct + '%';
+            });
+          });
+        })(k);
+      }
+      chain.then(function () {
+        var blob = new Blob(parts, { type: 'video/mp4' });
+        video.src = URL.createObjectURL(blob);
+        vnote.textContent = '';
+        video.play().catch(function () {});
+      }).catch(function () { vnote.textContent = 'Не удалось загрузить видео'; });
+    }
+  }
+})();
+</script>
+</body>
+</html>
